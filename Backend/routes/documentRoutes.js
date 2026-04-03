@@ -26,6 +26,6 @@ router.post(
 );
 router.get('/', protect, getDocuments);
 router.get('/:id', protect, getDocumentById);
-router.delete('/:id', protect, deleteDocument);
+router.delete('/delete/:id', protect, deleteDocument);
 
 export default router;
