@@ -265,6 +265,58 @@ const normalizeFlashcard = (item) => {
 	};
 };
 
+const normalizeQuizItem = (item) => {
+	const question = String(item?.question || item?.prompt || '').trim();
+
+	let options = [];
+	if (Array.isArray(item?.options)) {
+		options = item.options
+			.map((opt) => {
+				if (typeof opt === 'string') {
+					return opt.trim();
+				}
+
+				if (typeof opt === 'object' && opt !== null) {
+					return String(opt.text || opt.option || opt.value || '').trim();
+				}
+
+				return '';
+			})
+			.filter(Boolean);
+	} else if (item?.options && typeof item.options === 'object') {
+		options = Object.values(item.options)
+			.map((value) => String(value || '').trim())
+			.filter(Boolean);
+	} else if (Array.isArray(item?.choices)) {
+		options = item.choices.map((choice) => String(choice || '').trim()).filter(Boolean);
+	}
+
+	if (options.length > 4) {
+		options = options.slice(0, 4);
+	}
+
+	const rawAnswer = String(item?.correctAnswer || item?.answer || item?.correct_option || '').trim();
+	let correctAnswer = rawAnswer;
+	if (rawAnswer && !options.includes(rawAnswer)) {
+		const match = rawAnswer.match(/^[A-Da-d]$/);
+		if (match && options.length === 4) {
+			const idx = match[0].toUpperCase().charCodeAt(0) - 65;
+			correctAnswer = options[idx] || options[0];
+		}
+	}
+
+	if (!correctAnswer && options.length > 0) {
+		correctAnswer = options[0];
+	}
+
+	return {
+		question,
+		options,
+		correctAnswer,
+		explanation: String(item?.explanation || item?.reason || '').trim(),
+	};
+};
+
 const requestFlashcardBatch = async ({
 	sourceText,
 	batchCount,
@@ -376,6 +428,7 @@ export const generateFlashcards = async (text, count = 10) => {
 };
 
 export const generateQuiz = async (text, count = 10) => {
+	const requestedCount = sanitizeRequestedCount(count, 10);
 	const sourceText = limitInput(normalizeText(text));
 	if (!sourceText) {
 		return [];
@@ -383,7 +436,7 @@ export const generateQuiz = async (text, count = 10) => {
 
 	const prompt = [
 		'Create multiple-choice quiz questions from the text below.',
-		`Return ONLY JSON as an array with up to ${count} items.`,
+		`Return ONLY JSON as an array with EXACTLY ${requestedCount} items.`,
 		'Each item must have:',
 		'- question (string)',
 		'- options (array of exactly 4 strings)',
@@ -394,26 +447,23 @@ export const generateQuiz = async (text, count = 10) => {
 		sourceText,
 	].join('\n');
 
-	const raw = await generate(prompt, { responseMimeType: 'application/json', temperature: 0.2 });
+	const raw = await generate(prompt, {
+		responseMimeType: 'application/json',
+		temperature: 0.2,
+		numPredict: Math.min(2600, Math.max(900, requestedCount * 150)),
+	});
 	const parsed = parseJsonResponse(raw, []);
 
-	if (!Array.isArray(parsed)) {
-		return [];
-	}
+	const candidates = Array.isArray(parsed)
+		? parsed
+		: Array.isArray(parsed?.questions)
+			? parsed.questions
+			: [];
 
-	return parsed
-		.filter((item) => item && item.question && Array.isArray(item.options) && item.options.length === 4)
-		.map((item) => {
-			const options = item.options.map((opt) => String(opt).trim());
-			const correctAnswer = options.includes(item.correctAnswer) ? item.correctAnswer : options[0];
-
-			return {
-				question: String(item.question).trim(),
-				options,
-				correctAnswer,
-				explanation: String(item.explanation || '').trim(),
-			};
-		});
+	return candidates
+		.map(normalizeQuizItem)
+		.filter((item) => item.question && item.options.length === 4)
+		.slice(0, requestedCount);
 };
 
 export const generateSummary = async (text, maxWords = 180) => {

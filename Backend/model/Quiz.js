@@ -20,9 +20,16 @@ const quizSchema = new mongoose.Schema({
     questions: [
         {   
             question: { type: String, required: true },
-            options: [{ type: String, required: true ,validate: [array => array.length === 4, 'Exactly 4 options are required']}],
+            options: {
+                type: [{ type: String, required: true }],
+                required: true,
+                validate: {
+                    validator: (value) => Array.isArray(value) && value.length === 4,
+                    message: 'Exactly 4 options are required'
+                }
+            },
             correctAnswer: { type: String, required: true },
-            explanation: { type: String,enum:['easy', 'medium', 'hard'] ,default: 'medium' },
+            explanation: { type: String, default: '' },
             userAnswer: [{ 
                 questionIndex:{ type: Number, required: true },
                 selectedAnswer: { type: String, required: true },
