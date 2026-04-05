@@ -1,23 +1,23 @@
 import React from 'react'
-import { BrowserRouter,Routes,Route,Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import RegisterPage from './pages/Auth/RegisterPage';
 import Login from './pages/Auth/LoginPage';
+import LogoutPage from './pages/Auth/LogoutPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import DocumentListPage from './pages/Documents/DocumentListPage';
-import DashboardDetailsPage from './pages/documents/Documentsdetailspage';
+import DashboardDetailsPage from './pages/Documents/DocumentsDetailsPage';
 import FlashCardList from './pages/FlashCard/FlashCardList';
 import FlashCardPage from './pages/FlashCard/FlashCardPage';
 import QuizzesTakePage from './pages/Quizzes/QuizzesTakePage';
 import QuizzesResultsPage from './pages/Quizzes/QuizzesResultsPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import ProtectedRoute from './component/auth/ProtectedRoute';
+import { useAuth } from './context/Authcontext';
 
 
 
 function App() {
- 
-  const isAuthenticated = false; // Replace with your actual authentication logic
-  const loading = false; // Replace with your actual loading state
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -34,13 +34,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
-          } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
 
-        <Route element={<ProtectedRoute/>}>
+
+
+        <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentListPage />} />
           <Route path="/documents/:id" element={<DashboardDetailsPage />} />
@@ -52,7 +53,7 @@ function App() {
         </Route>
 
 
-        <Route path="*" element={<div>Profile Page</div>} />
+        <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
 
       </Routes>
     </BrowserRouter>

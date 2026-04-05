@@ -1,8 +1,10 @@
-import { Navigate,Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
+import { useAuth } from "../../context/Authcontext";
+
 const ProtectedRoute = () => {
-  const isAuthenticated = true; // Replace with your actual authentication logic
-  const loading = false; // Replace with your actual loading state
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -20,7 +22,7 @@ const ProtectedRoute = () => {
             <Outlet />
         </AppLayout>
     ) : (
-        <Navigate to="/login" />
+      <Navigate to="/login" replace state={{ from: location.pathname }} />
     );
     }
 export default ProtectedRoute;

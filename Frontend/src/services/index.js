@@ -4,4 +4,4 @@ export * from './quizApi';
 export * from './aiApi';
 export * from './progressApi';
 export * from './documentApi';
-export * from './flashCardApi';
+export * from './flashcardApi';

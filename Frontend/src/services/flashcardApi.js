@@ -1,5 +1,3 @@
-import { get } from 'node:http';
-import { getAllFlashcards } from '../../../Backend/controllers/flashCardController';
 import {api} from './api';
 
 export const flashcardApi = api.injectEndpoints({
@@ -22,8 +20,8 @@ export const flashcardApi = api.injectEndpoints({
         }),
         toggleFlashcard: builder.mutation({
             query: ({ setId, cardId }) => ({
-                url: `/flashcards/${setId}/cards/${cardId}/toggle`,
-                method: 'PATCH',
+                url: `/flashcards/${setId}/cards/${cardId}/star`,
+                method: 'PUT',
             }),
             invalidatesTags: (result, error, { setId }) => [{ type: 'Flashcard', id: setId }],
         }),

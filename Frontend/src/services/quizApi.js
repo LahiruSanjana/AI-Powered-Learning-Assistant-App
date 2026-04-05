@@ -22,6 +22,13 @@ export const quizApi = api.injectEndpoints({
       query: (quizId) => `/quiz/${quizId}/results`,
       providesTags: (result, error, quizId) => [{ type: 'Quiz', id: quizId }],
     }),
+    deleteQuizResult: builder.mutation({
+      query: (quizId) => ({
+        url: `/quiz/${quizId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Quiz', 'Progress'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -31,4 +38,5 @@ export const {
   useGetQuizByIdQuery,
   useSubmitQuizMutation,
   useGetQuizResultsQuery,
+  useDeleteQuizResultMutation,
 } = quizApi;
